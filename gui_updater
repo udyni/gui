@@ -1,0 +1,44 @@
+#!/bin/bash
+
+GUIDIRS=`find . -maxdepth 1 -type d -regex '\./[^.]*$'`
+MAINDIR=`pwd`
+
+for DIR in $GUIDIRS; do
+	echo "Processing $DIR ..."
+	cd $DIR
+
+	rm -f Ui_*.py
+	rm -f Rc_*.py
+
+	if [[ `grep "PyQt4" *.py` != "" ]]; then
+		echo "Using PyQt4 ..."
+		for UI in `find . -type f -name "*.ui"`; do
+			OUTPUT="Ui_$(echo $UI | sed 's/^\.\///' | sed 's/\.ui/\.py/')"
+			echo "Compiling $UI to $OUTPUT..."
+			pyuic4 $UI > $OUTPUT
+		done
+		for RC in `find . -type f -name "*.rc"`; do
+			OUTPUT="Rc_$(echo $RC | sed 's/^\.\///' | sed 's/\.rc/\.py/')"
+			echo "Compiling $RC to $OUTPUT..."
+			pyrcc4 $RC > $OUTPUT
+		done
+		cd $MAINDIR
+
+	elif [[ `grep "PyQt5" *.py` != "" ]]; then
+		echo "Using PyQt5 ..."
+		for UI in `find . -type f -name "*.ui"`; do
+			OUTPUT="Ui_$(echo $UI | sed 's/^\.\///' | sed 's/\.ui/\.py/')"
+			echo "Compiling $UI to $OUTPUT..."
+			pyuic5 $UI > $OUTPUT
+		done
+		for RC in `find . -type f -name "*.rc"`; do
+			OUTPUT="Rc_$(echo $RC | sed 's/^\.\///' | sed 's/\.rc/\.py/')"
+			echo "Compiling $RC to $OUTPUT..."
+			pyrcc5 $RC > $OUTPUT
+		done
+
+	else
+		echo "No PyQt found"
+	fi
+	cd $MAINDIR
+done
