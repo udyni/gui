@@ -1,0 +1,7 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=UDynI Browser
+Exec=/opt/tango/gui/Browser
+Categories=Science;
+Icon=/opt/tango/gui/udyni.png

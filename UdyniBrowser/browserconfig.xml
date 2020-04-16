@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<browser>
+	<program executable="/usr/local/bin/astor">Astor manager</program>
+	<program executable="/usr/local/bin/jive">Jive browser</program>
+	<category id="laser" name="Laser system" status="expanded">
+		<program executable="python3 ../CryostarGUI/cryostar.py">Cryostar controller</program>
+	</category>
+	<category id="vacuum" name="Vacuum system" status="expanded">
+		<!--<program executable="python none.py">Vacuum supervisor</program>
+		<category id="vacuum_adv" name="Advanced" status="collapsed">-->
+			<program executable="python ../DryVacGUI/dryvac.py">DryVac main pump</program>
+		<!--</category>-->
+		<program executable="/usr/local/bin/atkpanel udyni/vacuum/tpg1">Pressure Gauge Spectrometer</program>
+		<program executable="/usr/local/bin/atkpanel udyni/vacuum/tpg2">Pressure Gauge VMI</program>
+	</category>
+	<category id="cooling" name="Cooling system" status="expanded">
+		<program executable="python ../CoolingGUI/cooling.py">Cooling valves</program>
+		<!--<category id="cooling_adv" name="Advanced" status="collapsed">
+			<program executable="python none.py">Chiller supervisor</program>
+		</category>-->
+	</category>
+	<category id="vmi" name="VMI" status="expanded">
+		<program executable="python3 ../IsegGUI/IsegGUI.py">Iseg HV power supplies</program>
+	</category>
+	<category id="acquisition" name="Acquisition" status="expanded">
+		<program executable="python3 ../SpectrumViewer/spectrumviewer.py">Spectrum Viewer</program>
+	</category>
+</browser>

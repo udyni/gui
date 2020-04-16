@@ -1,0 +1,7 @@
+#!/bin/bash
+
+PYTHON3=`which python3`
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $DIR
+
+$PYTHON3 UdyniBrowser/udynibrowser.py
