@@ -17,8 +17,8 @@ for DIR in $GUIDIRS; do
 			echo "Compiling $UI to $OUTPUT..."
 			pyuic4 $UI > $OUTPUT
 		done
-		for RC in `find . -type f -name "*.rc"`; do
-			OUTPUT="Rc_$(echo $RC | sed 's/^\.\///' | sed 's/\.rc/\.py/')"
+		for RC in `find . -type f -name "*.rc" -or -name "*.qrc"`; do
+			OUTPUT="$(echo $RC | sed 's/^\.\///' | sed 's/\.[q]rc//')_rc.py"
 			echo "Compiling $RC to $OUTPUT..."
 			pyrcc4 $RC > $OUTPUT
 		done
@@ -31,8 +31,8 @@ for DIR in $GUIDIRS; do
 			echo "Compiling $UI to $OUTPUT..."
 			pyuic5 $UI > $OUTPUT
 		done
-		for RC in `find . -type f -name "*.rc"`; do
-			OUTPUT="Rc_$(echo $RC | sed 's/^\.\///' | sed 's/\.rc/\.py/')"
+		for RC in `find . -type f -name "*.rc" -or -name "*.qrc"`; do
+			OUTPUT="$(echo $RC | sed 's/^\.\///' | sed 's/\.[q]rc//')_rc.py"
 			echo "Compiling $RC to $OUTPUT..."
 			pyrcc5 $RC > $OUTPUT
 		done
