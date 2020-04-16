@@ -11,7 +11,7 @@ from PyQt5 import QtGui
 from PyQt5.QtWidgets import QFileDialog
 
 from Ui_spectrumviewer import Ui_SpectrumViewer
-import Rc_spectrumviewer
+from Ui_spectrumviewer_setscale import Ui_SpectrumViewer_SetScale
 
 import re
 import h5py as h5
@@ -29,6 +29,39 @@ from matplotlib.figure import Figure
 
 class NavigationToolbar(NavigationToolbar2QT):
     toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] not in ('Subplots', )]
+
+
+class SpectrumViewer_Setscale(QtWidgets.QDialog, Ui_SpectrumViewer_SetScale):
+    def __init__(self, x, y, scaling=1.0, parent=None):
+        # Parent constructors
+        QtWidgets.QDialog.__init__(self, parent)
+
+        # Setup Ui
+        self.setupUi(self)
+
+        # Scale only if factor is more than 1.1
+        self.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.scale_widget(self, scaling)
+
+        sz = self.size()
+        self.setMinimumSize(sz)
+        self.setMaximumSize(sz)
+
+        members = dir(self)
+        for m in members:
+            if issubclass(type(getattr(self, m)), QtWidgets.QWidget):
+                self.scale_widget(getattr(self, m), scaling)
+
+        self.min_wl.setText("{0:.1f}".format(x[0]))
+        self.max_wl.setText("{0:.1f}".format(x[1]))
+        self.min_counts.setText("{0:.1f}".format(y[0]))
+        self.max_counts.setText("{0:.1f}".format(y[1]))
+
+    def scale_widget(self, widget, scaling):
+        sz = widget.size()
+        ps = widget.pos()
+        widget.resize(int(sz.width() * scaling), int(sz.height() * scaling))
+        widget.move(QtCore.QPoint(int(ps.x() * scaling), int(ps.y() * scaling)))
 
 
 class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
@@ -87,7 +120,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         self.spec_autoscale.setToolTip("Enable vertical autoscale")
         self.spec_toolbar.addWidget(self.spec_autoscale)
 
-        # Add autoscale button
+        # Add set scale button
         self.spec_setscale = QtWidgets.QPushButton()
         self.spec_setscale.setGeometry(QtCore.QRect(0, 0, 27*self.scaling, 27*self.scaling))
         self.spec_setscale.setText("")
@@ -99,6 +132,19 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         self.spec_setscale.setToolTip("Set plot limits")
         self.spec_setscale.released.connect(self.on_spec_setscale_released)
         self.spec_toolbar.addWidget(self.spec_setscale)
+
+        # Add restore scale button
+        self.spec_restore = QtWidgets.QPushButton()
+        self.spec_restore.setGeometry(QtCore.QRect(0, 0, 27*self.scaling, 27*self.scaling))
+        self.spec_restore.setText("")
+        restore_icon = QtGui.QIcon()
+        restore_icon.addPixmap(QtGui.QPixmap(":/icons/expand.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.spec_restore.setIcon(restore_icon)
+        self.spec_restore.setIconSize(QtCore.QSize(20*self.scaling, 20*self.scaling))
+        self.spec_restore.setObjectName("spec_autoscale")
+        self.spec_restore.setToolTip("Restore plot limits")
+        self.spec_restore.released.connect(self.on_spec_restore_released)
+        self.spec_toolbar.addWidget(self.spec_restore)
 
         # Add delta cursors button
         self.spec_delta = QtWidgets.QPushButton()
@@ -120,7 +166,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         vbox.addWidget(self.spec_toolbar)
         self.spectrum_area.setLayout(vbox)
         self.spectrum_plot = None
-        self.last_spectrum_update = time.time()
+        self.last_spectrum_update = 0
         self.wl = None
 
         # Connect event to slot
@@ -186,9 +232,9 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
                 self.spec_int.setText(self.spec_int.text() + " ms")
         elif source is self.spec_setpoint:
             if event.type() == QtCore.QEvent.FocusIn:
-                print("SETPOINT FocusIn")
+                self.spec_setpoint.setText(self.spec_setpoint.text()[:-3])
             elif event.type() == QtCore.QEvent.FocusOut:
-                print("SETPOINT FocusOut")
+                self.spec_setpoint.setText(self.spec_setpoint.text() + " °C")
         return QtWidgets.QMainWindow.eventFilter(self, source, event)
 
     def get_spec_list(self):
@@ -223,6 +269,8 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
                     print("Failed to unsubscribe event {0:d} (Error: {1!s})".format(ev, e.args[0].desc))
         self.dev = None
         self.ev_id = []
+        self.spec_fig.clear()
+        self.spectrum_plot = None
 
     def open_spectrometer(self, device):
         # Create new DeviceProxy
@@ -480,6 +528,20 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
                 QtWidgets.QMessageBox.critical(self, "Bad value", "Failed to set the integration time (Error: {:})".format(e))
 
     @QtCore.pyqtSlot()
+    def on_spec_setpoint_editingFinished(self):
+        """ Set TEC setpoint. """
+        if self.dev is not None and self.dev_state != PT.DevState.FAULT:
+            try:
+                value = self.spec_setpoint.text()
+                if len(value) > 3 and value[-2:] == "°C":
+                    value = value[:-3]
+                self.dev.TECSetpoint = float(value)
+            except PT.DevFailed as e:
+                QtWidgets.QMessageBox.critical(self, "Failed to set value", "Failed to set the integration time (Error: {:})".format(e.args[0].desc))
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(self, "Bad value", "Failed to set the integration time (Error: {:})".format(e))
+
+    @QtCore.pyqtSlot()
     def on_spec_boxcar_editingFinished(self):
         """ Set number of scans to average. """
         if self.dev is not None and self.dev_state != PT.DevState.FAULT:
@@ -560,6 +622,19 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
                     self.dev.enableBackgroundSubtraction = False
             except PT.DevFailed as e:
                 self.spec_bkgsub.setChecked(self.dev.enableBackgroundSubtraction)
+                QtWidgets.QMessageBox.critical(self, "Failed to set value", "Failed to set the background subtraction (Error: {:})".format(e.args[0].desc))
+
+    @QtCore.pyqtSlot()
+    def on_spec_tec_released(self):
+        """ Enable/disable background subtraction. """
+        if self.dev is not None and self.dev_state != PT.DevState.FAULT:
+            try:
+                if self.spec_tec.isChecked():
+                    self.dev.enableTEC = True
+                else:
+                    self.dev.enableTEC = False
+            except PT.DevFailed as e:
+                self.spec_bkgsub.setChecked(self.dev.enableTEC)
                 QtWidgets.QMessageBox.critical(self, "Failed to set value", "Failed to set the background subtraction (Error: {:})".format(e.args[0].desc))
 
     @QtCore.pyqtSlot()
@@ -704,8 +779,33 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
 
     @QtCore.pyqtSlot()
     def on_spec_setscale_released(self):
-        print("Set scale")
-        pass
+        dlg = SpectrumViewer_Setscale(self.spectrum_plot.get_xlim(), self.spectrum_plot.get_ylim(), self.scaling, self)
+        res = dlg.exec_()
+        if res == 1:
+            # Pressed ok. get values
+            try:
+                xmin = float(dlg.min_wl.text())
+                xmax = float(dlg.max_wl.text())
+                self.spectrum_plot.set_xlim([xmin, xmax])
+            except ValueError:
+                pass
+
+            try:
+                ymin = float(dlg.min_counts.text())
+                ymax = float(dlg.max_counts.text())
+                self.spectrum_plot.set_ylim([ymin, ymax])
+            except ValueError:
+                pass
+
+    @QtCore.pyqtSlot()
+    def on_spec_restore_released(self):
+        if self.spectrum_plot is not None:
+            xmin = np.min(self.spectrum_plot.lines[0].get_xdata())
+            xmax = np.max(self.spectrum_plot.lines[0].get_xdata())
+            self.spectrum_plot.set_xlim([xmin, xmax])
+            ymin = np.min(self.spectrum_plot.lines[0].get_ydata())
+            ymax = np.max(self.spectrum_plot.lines[0].get_ydata())
+            self.spectrum_plot.set_ylim([ymin, ymax])
 
     @QtCore.pyqtSlot(QtGui.QResizeEvent)
     def resizeEvent(self, event):

@@ -4,6 +4,7 @@
     <file>bulb_sub.png</file>
   </qresource>
   <qresource prefix="icons">
+    <file>expand.png</file>
     <file>setscale.png</file>
     <file>autoscale.png</file>
     <file>trash.png</file>
