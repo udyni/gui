@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Ignore compiled UI and RC files
+*/Ui_*
+*/*_rc.py
