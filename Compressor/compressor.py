@@ -9,17 +9,14 @@ Created on Sun May 10 22:21:29 2020
 import sys
 import os
 ## Add import paths
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
 sys.path.insert(1, os.path.join(sys.path[0], '../Icons'))
 
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
-from PyQt5 import QtGui
 
 import PyTango as PT
 
 from Ui_compressor import Ui_Compressor
-
 
 
 class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
