@@ -20,8 +20,8 @@
    <string>Spectrometer Viewer</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="spectrumviewer.qrc">
-    <normaloff>:/appicon/icon.svg</normaloff>:/appicon/icon.svg</iconset>
+   <iconset resource="../Icons/icons.qrc">
+    <normaloff>:/appicon/spectrum.svg</normaloff>:/appicon/spectrum.svg</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLabel" name="label_4">
@@ -151,8 +151,8 @@
       <string/>
      </property>
      <property name="icon">
-      <iconset resource="spectrumviewer.qrc">
-       <normaloff>:/icons/refresh.png</normaloff>:/icons/refresh.png</iconset>
+      <iconset resource="../Icons/icons.qrc">
+       <normaloff>:/buttons/refresh.png</normaloff>:/buttons/refresh.png</iconset>
      </property>
      <property name="iconSize">
       <size>
@@ -219,8 +219,8 @@
       <string/>
      </property>
      <property name="icon">
-      <iconset resource="spectrumviewer.qrc">
-       <normaloff>:/bulb/bulb_bkg.png</normaloff>:/bulb/bulb_bkg.png</iconset>
+      <iconset resource="../Icons/icons.qrc">
+       <normaloff>:/buttons/bulb_bkg.png</normaloff>:/buttons/bulb_bkg.png</iconset>
      </property>
      <property name="iconSize">
       <size>
@@ -242,8 +242,8 @@
       <string/>
      </property>
      <property name="icon">
-      <iconset resource="spectrumviewer.qrc">
-       <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
+      <iconset resource="../Icons/icons.qrc">
+       <normaloff>:/buttons/plus.png</normaloff>:/buttons/plus.png</iconset>
      </property>
      <property name="iconSize">
       <size>
@@ -265,8 +265,8 @@
       <string/>
      </property>
      <property name="icon">
-      <iconset resource="spectrumviewer.qrc">
-       <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
+      <iconset resource="../Icons/icons.qrc">
+       <normaloff>:/buttons/minus.png</normaloff>:/buttons/minus.png</iconset>
      </property>
     </widget>
     <widget class="QComboBox" name="spec_sel">
@@ -413,8 +413,8 @@
       <string/>
      </property>
      <property name="icon">
-      <iconset resource="spectrumviewer.qrc">
-       <normaloff>:/bulb/bulb_sub.png</normaloff>:/bulb/bulb_sub.png</iconset>
+      <iconset resource="../Icons/icons.qrc">
+       <normaloff>:/buttons/bulb_sub.png</normaloff>:/buttons/bulb_sub.png</iconset>
      </property>
      <property name="iconSize">
       <size>
@@ -483,8 +483,8 @@ font-weight: bold
       <string/>
      </property>
      <property name="icon">
-      <iconset resource="spectrumviewer.qrc">
-       <normaloff>:/icons/cooling.png</normaloff>:/icons/cooling.png</iconset>
+      <iconset resource="../Icons/icons.qrc">
+       <normaloff>:/buttons/cooling.png</normaloff>:/buttons/cooling.png</iconset>
      </property>
      <property name="iconSize">
       <size>
@@ -509,7 +509,7 @@ font-weight: bold
       <string/>
      </property>
      <property name="pixmap">
-      <pixmap resource="spectrumviewer.qrc">:/icons/thermometer.png</pixmap>
+      <pixmap resource="../Icons/icons.qrc">:/buttons/thermometer.png</pixmap>
      </property>
      <property name="scaledContents">
       <bool>true</bool>
@@ -528,8 +528,8 @@ font-weight: bold
       <string/>
      </property>
      <property name="icon">
-      <iconset resource="spectrumviewer.qrc">
-       <normaloff>:/icons/trash.png</normaloff>:/icons/trash.png</iconset>
+      <iconset resource="../Icons/icons.qrc">
+       <normaloff>:/buttons/trash.png</normaloff>:/buttons/trash.png</iconset>
      </property>
     </widget>
    </widget>
@@ -645,8 +645,27 @@ font-weight: bold
    </widget>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>spec_sel</tabstop>
+  <tabstop>spec_rescan</tabstop>
+  <tabstop>spec_int</tabstop>
+  <tabstop>spec_avg</tabstop>
+  <tabstop>spec_boxcar</tabstop>
+  <tabstop>spec_bkg</tabstop>
+  <tabstop>spec_bkgsub</tabstop>
+  <tabstop>add_overlay</tabstop>
+  <tabstop>remove_overlay</tabstop>
+  <tabstop>clear_overlay</tabstop>
+  <tabstop>spec_tec</tabstop>
+  <tabstop>spec_setpoint</tabstop>
+  <tabstop>spec_dark</tabstop>
+  <tabstop>spec_nl</tabstop>
+  <tabstop>spec_trigger</tabstop>
+  <tabstop>save_spec</tabstop>
+  <tabstop>pb_exit</tabstop>
+ </tabstops>
  <resources>
-  <include location="spectrumviewer.qrc"/>
+  <include location="../Icons/icons.qrc"/>
  </resources>
  <connections/>
 </ui>

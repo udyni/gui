@@ -5,6 +5,11 @@ Created on Mon Mar 17 14:41:50 2014
 @author: wyrdmeister
 """
 
+import sys
+import os
+## Add import paths
+sys.path.insert(1, os.path.join(sys.path[0], '../Icons'))
+
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -82,11 +87,15 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
 
         # Get scaling factor for HiDPI
         design_dpi = 95
-        current_dpi = app.primaryScreen().physicalDotsPerInch()
-        self.scaling = float(current_dpi) / float(design_dpi)
-        if self.scaling > 1.8:
-            self.scaling = 1.8
-        elif self.scaling < 1.1:
+        app = QtWidgets.QApplication.instance()
+        if app is not None:
+            current_dpi = app.primaryScreen().physicalDotsPerInch()
+            self.scaling = float(current_dpi) / float(design_dpi)
+            if self.scaling > 1.8:
+                self.scaling = 1.8
+            elif self.scaling < 1.1:
+                self.scaling = 1.0
+        else:
             self.scaling = 1.0
 
         # Build UI
@@ -112,7 +121,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         self.spec_autoscale.setGeometry(QtCore.QRect(0, 0, 27*self.scaling, 27*self.scaling))
         self.spec_autoscale.setText("")
         autoscale_icon = QtGui.QIcon()
-        autoscale_icon.addPixmap(QtGui.QPixmap(":/icons/autoscale.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        autoscale_icon.addPixmap(QtGui.QPixmap(":/buttons/autoscale.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.spec_autoscale.setIcon(autoscale_icon)
         self.spec_autoscale.setIconSize(QtCore.QSize(20*self.scaling, 20*self.scaling))
         self.spec_autoscale.setCheckable(True)
@@ -125,7 +134,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         self.spec_setscale.setGeometry(QtCore.QRect(0, 0, 27*self.scaling, 27*self.scaling))
         self.spec_setscale.setText("")
         scale_icon = QtGui.QIcon()
-        scale_icon.addPixmap(QtGui.QPixmap(":/icons/setscale.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        scale_icon.addPixmap(QtGui.QPixmap(":/buttons/setscale.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.spec_setscale.setIcon(scale_icon)
         self.spec_setscale.setIconSize(QtCore.QSize(20*self.scaling, 20*self.scaling))
         self.spec_setscale.setObjectName("spec_autoscale")
@@ -138,7 +147,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         self.spec_restore.setGeometry(QtCore.QRect(0, 0, 27*self.scaling, 27*self.scaling))
         self.spec_restore.setText("")
         restore_icon = QtGui.QIcon()
-        restore_icon.addPixmap(QtGui.QPixmap(":/icons/expand.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        restore_icon.addPixmap(QtGui.QPixmap(":/buttons/expand.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.spec_restore.setIcon(restore_icon)
         self.spec_restore.setIconSize(QtCore.QSize(20*self.scaling, 20*self.scaling))
         self.spec_restore.setObjectName("spec_autoscale")
@@ -151,7 +160,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         self.spec_delta.setGeometry(QtCore.QRect(0, 0, 27*self.scaling, 27*self.scaling))
         self.spec_delta.setText("")
         delta_icon = QtGui.QIcon()
-        delta_icon.addPixmap(QtGui.QPixmap(":/icons/delta.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        delta_icon.addPixmap(QtGui.QPixmap(":/buttons/delta.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.spec_delta.setIcon(delta_icon)
         self.spec_delta.setIconSize(QtCore.QSize(20*self.scaling, 20*self.scaling))
         self.spec_delta.setCheckable(True)

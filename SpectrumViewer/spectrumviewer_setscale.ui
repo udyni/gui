@@ -29,8 +29,8 @@
    <string>Set plot limits</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="spectrumviewer.qrc">
-    <normaloff>:/appicon/icon.svg</normaloff>:/appicon/icon.svg</iconset>
+   <iconset resource="../Icons/icons.qrc">
+    <normaloff>:/appicon/spectrum.svg</normaloff>:/appicon/spectrum.svg</iconset>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -156,8 +156,14 @@
    </property>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>min_wl</tabstop>
+  <tabstop>max_wl</tabstop>
+  <tabstop>min_counts</tabstop>
+  <tabstop>max_counts</tabstop>
+ </tabstops>
  <resources>
-  <include location="spectrumviewer.qrc"/>
+  <include location="../Icons/icons.qrc"/>
  </resources>
  <connections>
   <connection>
