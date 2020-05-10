@@ -20,7 +20,7 @@
    <string>UDynI Browser</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="udynibrowser.rc">
+   <iconset resource="../Icons/icons.qrc">
     <normaloff>:/appicon/udyni.png</normaloff>:/appicon/udyni.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -66,7 +66,7 @@
   </action>
  </widget>
  <resources>
-  <include location="udynibrowser.qrc"/>
+  <include location="../Icons/icons.qrc"/>
  </resources>
  <connections/>
 </ui>

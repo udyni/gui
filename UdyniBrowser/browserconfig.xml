@@ -4,6 +4,8 @@
 	<program executable="/usr/local/bin/jive">Jive browser</program>
 	<category id="laser" name="Laser system" status="expanded">
 		<program executable="python3 ../CryostarGUI/cryostar.py">Cryostar controller</program>
+		<program executable="python3 ../LaserCamera/lasercamera.py">Cryo camera</program>
+		<program executable="python3 ../Compressor/compressor.py">Compressor control</program>
 	</category>
 	<category id="vacuum" name="Vacuum system" status="expanded">
 		<!--<program executable="python none.py">Vacuum supervisor</program>
@@ -24,5 +26,8 @@
 	</category>
 	<category id="acquisition" name="Acquisition" status="expanded">
 		<program executable="python3 ../SpectrumViewer/spectrumviewer.py">Spectrum Viewer</program>
+	</category>
+	<category id="archive" name="Archive" status="expanded">
+		<program executable="python3 ../ArchivingViewer/archivingviewer.py">Archiving Viewer</program>
 	</category>
 </browser>

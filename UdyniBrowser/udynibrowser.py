@@ -20,6 +20,9 @@ Dependencies:
 
 import sys
 import os
+## Add import paths
+sys.path.insert(1, os.path.join(sys.path[0], '../Icons'))
+
 import re
 import time
 import psutil
