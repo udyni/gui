@@ -1,0 +1,30 @@
+<RCC>
+  <qresource prefix="appicon">
+    <file>prism.png</file>
+    <file>spectrum.svg</file>
+    <file>archive.png</file>
+    <file>lasericon.png</file>
+  </qresource>
+  <qresource prefix="buttons">
+    <file>axis.png</file>
+    <file>axis_ellipse.png</file>
+    <file>autoscale.png</file>
+    <file>bulb_bkg.png</file>
+    <file>bulb_sub.png</file>
+    <file>cooling.png</file>
+    <file>delta.png</file>
+    <file>expand.png</file>
+    <file>minus.png</file>
+    <file>plus.png</file>
+    <file>setscale.png</file>
+    <file>thermometer.png</file>
+    <file>trash.png</file>
+    <file>move.png</file>
+    <file>reference.png</file>
+    <file>target.png</file>
+    <file>refresh.png</file>
+    <file>confirm.png</file>
+    <file>gauss.png</file>
+    <file>reject.png</file>
+  </qresource>
+</RCC>
