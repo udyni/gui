@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="appicon">
+    <file>udyni.png</file>
     <file>prism.png</file>
     <file>spectrum.svg</file>
     <file>archive.png</file>
