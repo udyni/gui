@@ -50,6 +50,26 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
         self.setupUi(self)
         self.setup_fonts_and_scaling()
 
+
+        self.position.blockSignals(True)
+        self.velocity.blockSignals(True)
+        self.acceleration.blockSignals(True)
+
+        # Set minimum and maximum
+        self.position.setMinimum(int(-2**28))
+        self.position.setMaximum(int(2**28))
+        self.position.setSingleStep(1)
+        self.velocity.setMinimum(16.0)
+        self.velocity.setMaximum(5000.0)
+        self.velocity.setSingleStep(1.0)
+        self.acceleration.setMinimum(49.0)
+        self.acceleration.setMaximum(1518.0)
+        self.acceleration.setSingleStep(1.0)
+
+        self.position.blockSignals(False)
+        self.velocity.blockSignals(False)
+        self.acceleration.blockSignals(False)
+
         # Setup device
         try:
             self.dev = PT.DeviceProxy("udyni/laser/compressor")
@@ -96,6 +116,11 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
                 elif issubclass(type(getattr(self, m)), QtWidgets.QWidget):
                     self.scale_widget(getattr(self, m), self.scaling)
 
+        # Set title dimension
+        app = QtWidgets.QApplication.instance()
+        df = app.font()
+        self.title.setStyleSheet("font-size: {0:d}pt; font-weight: bold".format(int(df.pointSize()*1.5)));
+
     def scale_widget(self, widget, scaling):
         sz = widget.size()
         ps = widget.pos()
@@ -120,7 +145,26 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
             attr_value = ev.attr_value.value
 
             if attr_name == "state":
-                pass
+                base_style = "border-radius: 2px; border: 1px solid; border-color: black; "
+                if attr_value == PT.DevState.OFF:
+                    self.state.setText("Off")
+                    self.state.setStyleSheet(base_style + "background-color: white; color: black")
+
+                elif attr_value == PT.DevState.STANDBY:
+                    self.state.setText("Standby")
+                    self.state.setStyleSheet(base_style + "background-color: yellow; color: black")
+
+                elif attr_value == PT.DevState.MOVING:
+                    self.state.setText("Moving")
+                    self.state.setStyleSheet(base_style + "background-color: blue; color: black")
+
+                elif attr_value == PT.DevState.FAULT:
+                    self.state.setText("Fault")
+                    self.state.setStyleSheet(base_style + "background-color: red; color: white")
+
+                else:
+                    self.state.setText("UNKN")
+                    self.state.setStyleSheet(base_style + "background-color: gray; color: black")
 
             elif attr_name == "position":
                 if self.position_vc:
@@ -301,6 +345,33 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
     @QtCore.pyqtSlot()
     def on_plus_1000_released(self):
         self.move_button(1000)
+
+    @QtCore.pyqtSlot()
+    def on_pb_stop_released(self):
+        """ Stop button
+        """
+        try:
+            self.dev.Stop()
+        except PT.DevFailed as e:
+            QtWidgets.QMessageBox.critical(self, "Failed to stop device", e.args[0].desc)
+
+    @QtCore.pyqtSlot()
+    def on_pb_gohome_released(self):
+        """ Go home button
+        """
+        try:
+            self.dev.goHome()
+        except PT.DevFailed as e:
+            QtWidgets.QMessageBox.critical(self, "Failed to go home", e.args[0].desc)
+
+    @QtCore.pyqtSlot()
+    def on_pb_sethome_released(self):
+        """ Set home button
+        """
+        try:
+            self.dev.setHome()
+        except PT.DevFailed as e:
+            QtWidgets.QMessageBox.critical(self, "Failed to set home", e.args[0].desc)
 
     @QtCore.pyqtSlot()
     def on_pb_close_released(self):
