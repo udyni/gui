@@ -4,8 +4,14 @@ Cryostar control GUI
 
 Created on Wed Nov 29 11:40:23 2017
 
-@author: Michele Devetta <michele.devetta@mail.polimi.it>
+@author: Michele Devetta <michele.devetta@cnr.it>
 """
+
+import sys
+import os
+## Add import paths
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+sys.path.insert(1, os.path.join(sys.path[0], '../Icons'))
 
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
@@ -13,6 +19,7 @@ from PyQt5 import QtWidgets
 from Ui_cryostar import Ui_Cryostar
 
 import PyTango as PT
+from PyQTango import QStatusLed
 
 
 class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
@@ -25,6 +32,9 @@ class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
     def __init__(self, parent=None):
         # Parent constructors
         QtWidgets.QMainWindow.__init__(self, parent)
+
+        # Get app
+        app = QtWidgets.QApplication.instance()
 
         # Get scaling factor for HiDPI
         design_dpi = 95
@@ -40,18 +50,22 @@ class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
         self.setup_fonts_and_scaling()
 
         # Open Tango device
-        self.dev = PT.DeviceProxy("udyni/laser/cryo")
-
-        # Get enum labels
-        self.pump_status_labels = self.dev.get_attribute_config("pump_status").enum_labels
-        self.vacuum_status_labels = self.dev.get_attribute_config("vacuum_status").enum_labels
-        self.compressor_status_labels = self.dev.get_attribute_config("compressor_status").enum_labels
-        self.temperature_status_labels = self.dev.get_attribute_config("temperature_status").enum_labels
+        try:
+            self.dev = PT.DeviceProxy("udyni/laser/cryo")
+            self.dev.ping()
+        except PT.DevFailed:
+            QtWidgets.QMessageBox.critical(self, "Device not found", "The Cryostar device is not running")
+            exit(-1)
 
         # Open water valve device
-        db = PT.Database()
-        prp = db.get_device_property("udyni/laser/cryo", "water_valve")
-        self.water = PT.DeviceProxy(prp['water_valve'][0])
+        try:
+            db = PT.Database()
+            prp = db.get_device_property("udyni/laser/cryo", "water_valve")
+            self.water = PT.DeviceProxy(prp['water_valve'][0])
+            self.water.ping()
+        except PT.DevFailed:
+            QtWidgets.QMessageBox.critical(self, "Device not found", "The water valve device is missing or is not running")
+            exit(-1)
 
         # Connect event to slot
         self.tango_event.connect(self.event_handler)
@@ -65,7 +79,7 @@ class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
         self.dev.subscribe_event("compressor_status", PT.EventType.CHANGE_EVENT, self.event_callback)
         self.dev.subscribe_event("temperature_status", PT.EventType.CHANGE_EVENT, self.event_callback)
         self.water.subscribe_event("State", PT.EventType.CHANGE_EVENT, self.event_callback)
-        self.water.subscribe_event("WaterFlow", PT.EventType.CHANGE_EVENT, self.event_callback)
+        #self.water.subscribe_event("WaterFlow", PT.EventType.CHANGE_EVENT, self.event_callback)
 
     def setup_fonts_and_scaling(self):
         # Setup font size and scaling on hidpi
@@ -76,6 +90,15 @@ class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
             for m in members:
                 if issubclass(type(getattr(self, m)), QtWidgets.QWidget):
                     self.scale_widget(getattr(self, m), self.scaling)
+
+        sz = self.size()
+        self.setFixedSize(sz)
+
+        app = QtWidgets.QApplication.instance()
+        df = app.font()
+        self.pressure.setStyleSheet("font-size: {0:d}pt; font-weight: bold".format(int(df.pointSize()*2.5)));
+        self.temperature.setStyleSheet("font-size: {0:d}pt; font-weight: bold".format(int(df.pointSize()*2.5)));
+        self.delta.setStyleSheet("font-size: {0:d}pt; font-weight: bold".format(int(df.pointSize()*2.5)));
 
     def scale_widget(self, widget, scaling):
         sz = widget.size()
@@ -96,22 +119,38 @@ class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
             if event.device.name() == self.dev.name():
                 # Event from Cryo controller
                 if event.attr_value.name.lower() == "pressure":
-                    self.pressure.setText("{:6.2e}".format(event.attr_value.value))
+                    self.pressure.setText("{:6.2e} mbar".format(event.attr_value.value))
 
                 elif event.attr_value.name.lower() == "temperature":
-                    self.temperature.setText("{:d}".format(event.attr_value.value))
+                    self.temperature.setText("{:d} °C".format(event.attr_value.value))
 
                 elif event.attr_value.name.lower() == "delta":
-                    self.delta.setText("{:d}".format(event.attr_value.value))
+                    self.delta.setText("{:d} °C".format(event.attr_value.value))
 
                 elif event.attr_value.name.lower() == "pump_status":
-                    self.pump_status.setText(self.pump_status_labels[event.attr_value.value])
+                    if event.attr_value.value == 0:
+                        self.pump_status.setState(QStatusLed.Off)
+                    elif event.attr_value.value == 1:
+                        self.pump_status.setState(QStatusLed.On)
+                    elif event.attr_value.value == 2:
+                        self.pump_status.setState(QStatusLed.Error)
 
                 elif event.attr_value.name.lower() == "vacuum_status":
-                    self.vacuum_status.setText(self.vacuum_status_labels[event.attr_value.value])
+                    if event.attr_value.value == 0:
+                        self.vacuum_status.setState(QStatusLed.Error)
+                    elif event.attr_value.value == 1:
+                        self.vacuum_status.setState(QStatusLed.On)
+                    elif event.attr_value.value == 2:
+                        self.vacuum_status.setState(QStatusLed.Blinking)
 
                 elif event.attr_value.name.lower() == "compressor_status":
-                    self.compressor_status.setText(self.compressor_status_labels[event.attr_value.value])
+                    if event.attr_value.value == 0:
+                        self.compressor_status.setState(QStatusLed.Off)
+                    elif event.attr_value.value == 1:
+                        self.compressor_status.setState(QStatusLed.Blinking)
+                    elif event.attr_value.value == 2:
+                        self.compressor_status.setState(QStatusLed.On)
+
                     if event.attr_value.value == 2:
                         self.pb_start.setDisabled(True)
                         self.pb_stop.setDisabled(False)
@@ -120,7 +159,14 @@ class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
                         self.pb_stop.setDisabled(True)
 
                 elif event.attr_value.name.lower() == "temperature_status":
-                    self.temperature_status.setText(self.temperature_status_labels[event.attr_value.value])
+                    if event.attr_value.value == 0:
+                        self.temperature_status.setState(QStatusLed.Error)
+                    elif event.attr_value.value == 1:
+                        self.temperature_status.setState(QStatusLed.Off)
+                    elif event.attr_value.value == 2:
+                        self.temperature_status.setState(QStatusLed.Blinking)
+                    elif event.attr_value.value == 3:
+                        self.temperature_status.setState(QStatusLed.On)
 
                 else:
                     print("Event from unexpected attribute '{:}'".format(event.attr_name))
@@ -129,16 +175,11 @@ class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
                 # Event from water valve
                 if event.attr_value.name.lower() == "state":
                     if event.attr_value.value == PT.DevState.OPEN:
-                        self.water_status.setText("OPEN")
-                        self.water_status.setStyleSheet("border-radius:4px;border:1px solid darkgray;background-color:darkgreen;color:white")
+                        self.water_status.setState(QStatusLed.On)
                     elif event.attr_value.value == PT.DevState.CLOSE:
-                        self.water_status.setText("CLOSE")
-                        self.water_status.setStyleSheet("border-radius:4px;border:1px solid darkgray;background-color:gray;color:black")
+                        self.water_status.setState(QStatusLed.Off)
                     else:
-                        self.water_status.setText("FAULT")
-                        self.water_status.setStyleSheet("border-radius:4px;border:1px solid darkgray;background-color:red;color:white")
-                elif event.attr_value.name.lower() == "waterflow":
-                    self.water_flow.setText("{:4.2f}".format(event.attr_value.value))
+                        self.water_status.setState(QStatusLed.Error)
                 else:
                     print("Event from unexpected attribute '{:}'".format(event.attr_name))
 
