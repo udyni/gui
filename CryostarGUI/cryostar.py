@@ -71,15 +71,15 @@ class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
         self.tango_event.connect(self.event_handler)
 
         # Subscribe all the relevant events
-        self.dev.subscribe_event("pressure", PT.EventType.CHANGE_EVENT, self.event_callback)
-        self.dev.subscribe_event("temperature", PT.EventType.CHANGE_EVENT, self.event_callback)
-        self.dev.subscribe_event("delta", PT.EventType.CHANGE_EVENT, self.event_callback)
-        self.dev.subscribe_event("pump_status", PT.EventType.CHANGE_EVENT, self.event_callback)
-        self.dev.subscribe_event("vacuum_status", PT.EventType.CHANGE_EVENT, self.event_callback)
-        self.dev.subscribe_event("compressor_status", PT.EventType.CHANGE_EVENT, self.event_callback)
-        self.dev.subscribe_event("temperature_status", PT.EventType.CHANGE_EVENT, self.event_callback)
-        self.water.subscribe_event("State", PT.EventType.CHANGE_EVENT, self.event_callback)
-        #self.water.subscribe_event("WaterFlow", PT.EventType.CHANGE_EVENT, self.event_callback)
+        self.eid_c = []
+        self.eid_c.append(self.dev.subscribe_event("pressure", PT.EventType.CHANGE_EVENT, self.event_callback))
+        self.eid_c.append(self.dev.subscribe_event("temperature", PT.EventType.CHANGE_EVENT, self.event_callback))
+        self.eid_c.append(self.dev.subscribe_event("delta", PT.EventType.CHANGE_EVENT, self.event_callback))
+        self.eid_c.append(self.dev.subscribe_event("pump_status", PT.EventType.CHANGE_EVENT, self.event_callback))
+        self.eid_c.append(self.dev.subscribe_event("vacuum_status", PT.EventType.CHANGE_EVENT, self.event_callback))
+        self.eid_c.append(self.dev.subscribe_event("compressor_status", PT.EventType.CHANGE_EVENT, self.event_callback))
+        self.eid_c.append(self.dev.subscribe_event("temperature_status", PT.EventType.CHANGE_EVENT, self.event_callback))
+        self.eid_w = self.water.subscribe_event("State", PT.EventType.CHANGE_EVENT, self.event_callback)
 
     def setup_fonts_and_scaling(self):
         # Setup font size and scaling on hidpi
@@ -211,6 +211,19 @@ class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
     def on_pb_close_released(self):
         """ Close main windows. """
         self.close()
+
+    @QtCore.pyqtSlot(QtCore.QCloseEvent)
+    def closeEvent(self, event):
+        for e in self.eid_c:
+            try:
+                self.dev.unsubscribe_event(e)
+            except PT.DevFailed:
+                pass
+        try:
+            self.water.unsubscribe_event(self.eid_w)
+        except PT.DevFailed:
+            pass
+        event.accept()
 
 
 if __name__ == "__main__":
