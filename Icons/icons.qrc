@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="appicon">
+    <file>devicemanager.png</file>
     <file>udyni.png</file>
     <file>prism.png</file>
     <file>spectrum.svg</file>
@@ -7,6 +8,7 @@
     <file>lasericon.png</file>
   </qresource>
   <qresource prefix="buttons">
+    <file>execute.png</file>
     <file>axis.png</file>
     <file>axis_ellipse.png</file>
     <file>autoscale.png</file>
