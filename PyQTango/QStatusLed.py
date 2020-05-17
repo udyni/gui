@@ -22,7 +22,7 @@ class QStatusLed(QtWidgets.QLabel):
 
     def __init__(self, parent=None):
         # Parent constructor
-        QtWidgets.QWidget.__init__(self, parent)
+        QtWidgets.QLabel.__init__(self, parent)
 
         # Icons
         self.setupIcons(self.size())

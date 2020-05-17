@@ -12,5 +12,8 @@
     <file>images/scalar.svg</file>
     <file>images/spectrum.png</file>
     <file>images/vline.png</file>
+    <file>images/confirm.png</file>
+    <file>images/reject.png</file>
+    <file>images/execute.png</file>
   </qresource>
 </RCC>
