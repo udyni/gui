@@ -24,13 +24,16 @@ DESTINATION = "/var/data/tango/bin/gui"
 
 def clean_dir(path):
     for el in os.listdir(path):
-        if os.path.isfile(el):
-            os.remove(os.path.join(path, el))
+        fullpath = os.path.join(path, el)
+        if os.path.isfile(fullpath):
+            print("Removing", fullpath)
+            os.remove(fullpath)
 
 
 if __name__ == "__main__":
     import os
     import shutil
+    import stat
 
     if not os.path.exists(GUI_UPDATER):
         print("This script should be executed inside the main folder of the GUI git tree")
@@ -55,4 +58,4 @@ if __name__ == "__main__":
             for f in files:
                 print("Copying", f, "to", gui_path)
                 shutil.copy(os.path.join(".", gui, f), gui_path)
-                os.chmod(os.path.join(gui_path, f), 644)
+                os.chmod(os.path.join(gui_path, f), stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
