@@ -15,6 +15,7 @@ sys.path.insert(1, os.path.join(sys.path[0], '../Icons'))
 
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
+from PyQt5 import QtGui
 
 from Ui_cryostar import Ui_Cryostar
 
@@ -212,7 +213,7 @@ class CryostarGUI(QtWidgets.QMainWindow, Ui_Cryostar):
         """ Close main windows. """
         self.close()
 
-    @QtCore.pyqtSlot(QtCore.QCloseEvent)
+    @QtCore.pyqtSlot(QtGui.QCloseEvent)
     def closeEvent(self, event):
         for e in self.eid_c:
             try:
