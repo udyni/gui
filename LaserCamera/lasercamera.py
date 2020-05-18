@@ -916,7 +916,11 @@ class LaserCamera(QtWidgets.QMainWindow, Ui_LaserCamera):
 
             # Find contours in the mask and inititalize the current
             # (x,y) of the ball
-            cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
+            cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if len(cnts) == 3:
+                cnts = cnts[1]
+            else:
+                cnts = cnts[0]
             self.debug("Centroid: found {0:d} contours".format(len(cnts)))
 
             # Proceed only if at least one contour is found
