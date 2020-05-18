@@ -209,6 +209,7 @@ class LaserCamera(QtWidgets.QMainWindow, Ui_LaserCamera):
         self.setref_panel = None
         self.references = {}
         self.last_centroid = None
+        self.last_update = {}
 
         # GaussFitter
         self.gf = GaussFitter()
@@ -467,6 +468,12 @@ class LaserCamera(QtWidgets.QMainWindow, Ui_LaserCamera):
         else:
             self.debug("Got event from {0}".format(ev.attr_value.name))
             attr_name = ev.attr_value.name.lower()
+
+            if attr_name in self.last_update:
+                if time.time() - self.last_update[attr_name] < 0.5:
+                    return
+
+            self.last_update[attr_name] = time.time()
             img = ev.attr_value.value
 
             # Compute image centroid if any of the views need it
