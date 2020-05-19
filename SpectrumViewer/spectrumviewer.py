@@ -8,6 +8,7 @@ Created on Mon Mar 17 14:41:50 2014
 import sys
 import os
 ## Add import paths
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 sys.path.insert(1, os.path.join(sys.path[0], '../Icons'))
 
 from PyQt5 import QtCore
@@ -100,9 +101,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
 
         # Build UI
         self.setupUi(self)
-        self.inhibith_resize = True
         self.setup_fonts_and_scaling()
-        self.inhibith_resize = False
 
         # Setup canvas for spectrum
         self.spec_fig = Figure()
@@ -116,53 +115,46 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         # Toolbar
         self.spec_toolbar = NavigationToolbar(self.spec_canvas, self)
 
+        # Remove current position label
+        n = self.spec_toolbar.layout().count()
+        label = self.spec_toolbar.layout().takeAt(n - 1)
+        self.spec_toolbar.addSeparator()
+
         # Add autoscale button
-        self.spec_autoscale = QtWidgets.QPushButton()
-        self.spec_autoscale.setGeometry(QtCore.QRect(0, 0, 27*self.scaling, 27*self.scaling))
-        self.spec_autoscale.setText("")
+        self.spec_autoscale = QtWidgets.QToolButton()
         autoscale_icon = QtGui.QIcon()
         autoscale_icon.addPixmap(QtGui.QPixmap(":/buttons/autoscale.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.spec_autoscale.setIcon(autoscale_icon)
-        self.spec_autoscale.setIconSize(QtCore.QSize(20*self.scaling, 20*self.scaling))
         self.spec_autoscale.setCheckable(True)
         self.spec_autoscale.setObjectName("spec_autoscale")
         self.spec_autoscale.setToolTip("Enable vertical autoscale")
         self.spec_toolbar.addWidget(self.spec_autoscale)
 
         # Add set scale button
-        self.spec_setscale = QtWidgets.QPushButton()
-        self.spec_setscale.setGeometry(QtCore.QRect(0, 0, 27*self.scaling, 27*self.scaling))
-        self.spec_setscale.setText("")
+        self.spec_setscale = QtWidgets.QToolButton()
         scale_icon = QtGui.QIcon()
         scale_icon.addPixmap(QtGui.QPixmap(":/buttons/setscale.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.spec_setscale.setIcon(scale_icon)
-        self.spec_setscale.setIconSize(QtCore.QSize(20*self.scaling, 20*self.scaling))
         self.spec_setscale.setObjectName("spec_autoscale")
         self.spec_setscale.setToolTip("Set plot limits")
         self.spec_setscale.released.connect(self.on_spec_setscale_released)
         self.spec_toolbar.addWidget(self.spec_setscale)
 
         # Add restore scale button
-        self.spec_restore = QtWidgets.QPushButton()
-        self.spec_restore.setGeometry(QtCore.QRect(0, 0, 27*self.scaling, 27*self.scaling))
-        self.spec_restore.setText("")
+        self.spec_restore = QtWidgets.QToolButton()
         restore_icon = QtGui.QIcon()
         restore_icon.addPixmap(QtGui.QPixmap(":/buttons/expand.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.spec_restore.setIcon(restore_icon)
-        self.spec_restore.setIconSize(QtCore.QSize(20*self.scaling, 20*self.scaling))
         self.spec_restore.setObjectName("spec_autoscale")
         self.spec_restore.setToolTip("Restore plot limits")
         self.spec_restore.released.connect(self.on_spec_restore_released)
         self.spec_toolbar.addWidget(self.spec_restore)
 
         # Add delta cursors button
-        self.spec_delta = QtWidgets.QPushButton()
-        self.spec_delta.setGeometry(QtCore.QRect(0, 0, 27*self.scaling, 27*self.scaling))
-        self.spec_delta.setText("")
+        self.spec_delta = QtWidgets.QToolButton()
         delta_icon = QtGui.QIcon()
         delta_icon.addPixmap(QtGui.QPixmap(":/buttons/delta.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.spec_delta.setIcon(delta_icon)
-        self.spec_delta.setIconSize(QtCore.QSize(20*self.scaling, 20*self.scaling))
         self.spec_delta.setCheckable(True)
         self.spec_delta.setObjectName("spec_delta")
         self.spec_delta.setToolTip("Enable delta cursor")
@@ -191,10 +183,6 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
             QtWidgets.QMessageBox.critical(self, "No spectrometer found", "No spectrometer found")
             exit(0)
 
-        # Add event filter
-        self.spec_int.installEventFilter(self)
-        self.spec_setpoint.installEventFilter(self)
-
     def setup_fonts_and_scaling(self):
         # Setup font size and scaling on hidpi
         if self.scaling > 1.1:
@@ -202,15 +190,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
             self.scale_widget(self, self.scaling)
             members = dir(self)
             for m in members:
-                if issubclass(type(getattr(self, m)), QtWidgets.QPushButton):
-                    self.scale_widget(getattr(self, m), self.scaling)
-                    if not getattr(self, m).icon().isNull():
-                        # Scale icon
-                        ratio = 20.0 / 27.0
-                        psz = getattr(self, m).size()
-                        getattr(self, m).setIconSize(QtCore.QSize(int(psz.width()*ratio), int(psz.height()*ratio)))
-
-                elif issubclass(type(getattr(self, m)), QtWidgets.QWidget):
+                if issubclass(type(getattr(self, m)), QtWidgets.QWidget):
                     self.scale_widget(getattr(self, m), self.scaling)
 
             # Scale matplotlib fonts
@@ -231,20 +211,6 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         ps = widget.pos()
         widget.resize(int(sz.width() * scaling), int(sz.height() * scaling))
         widget.move(QtCore.QPoint(int(ps.x() * scaling), int(ps.y() * scaling)))
-
-    # Event filter to catch focusIn and focusOut from QLineEdit with units
-    def eventFilter(self, source, event):
-        if source is self.spec_int:
-            if event.type() == QtCore.QEvent.FocusIn:
-                self.spec_int.setText(self.spec_int.text()[:-3])
-            elif event.type() == QtCore.QEvent.FocusOut:
-                self.spec_int.setText(self.spec_int.text() + " ms")
-        elif source is self.spec_setpoint:
-            if event.type() == QtCore.QEvent.FocusIn:
-                self.spec_setpoint.setText(self.spec_setpoint.text()[:-3])
-            elif event.type() == QtCore.QEvent.FocusOut:
-                self.spec_setpoint.setText(self.spec_setpoint.text() + " °C")
-        return QtWidgets.QMainWindow.eventFilter(self, source, event)
 
     def get_spec_list(self):
         # Get list of active spectrometers
@@ -276,6 +242,13 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
                     self.dev.unsubscribe_event(ev)
                 except PT.DevFailed as e:
                     print("Failed to unsubscribe event {0:d} (Error: {1!s})".format(ev, e.args[0].desc))
+
+        # Disconnect QAttributes
+        self.spec_int.setTangoAttribute("")
+        self.spec_avg.setTangoAttribute("")
+        self.spec_boxcar.setTangoAttribute("")
+        self.spec_setpoint.setTangoAttribute("")
+
         self.dev = None
         self.ev_id = []
         self.spec_fig.clear()
@@ -294,7 +267,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         self.spec_firmware.setText(self.dev.FirmwareVersion)
 
         # List of attributes to subscribe for change events
-        attr = ['BoxcarWidth', 'enableBackgroundSubtraction', 'enableElectricalDarkCorrection', 'enableNLCorrection', 'IntegrationTime', 'ScansToAverage', 'Spectrum', 'State']
+        attr = ['enableBackgroundSubtraction', 'enableElectricalDarkCorrection', 'enableNLCorrection', 'Spectrum', 'State']
 
         # Check if TEC is available
         al = self.dev.attribute_list_query()
@@ -303,18 +276,32 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
             if a.name.lower() == "enabletec":
                 tec = True
                 break
-        if not tec:
+
+        if tec:
+            self.spec_setpoint.setTangoAttribute(self.dev.name() + "/TECSetPoint")
+            self.spec_tec.setDisabled(False)
+            attr.append("EnableTEC")
+            attr.append("TECTemperature")
+            if self.dev.info().dev_class == "AvantesSpectrometer":
+                self.spec_update_tec.show()
+            else:
+                self.spec_update_tec.hide()
+            self.spec_tec.show()
+            self.spec_termicon.show()
+            self.spec_tectemp.show()
+
+        else:
             self.spec_tec.setChecked(False)
             self.spec_tec.setDisabled(True)
             self.spec_tectemp.setText("N.A.")
-            self.spec_setpoint.setDisabled(True)
-            self.spec_setpoint.setText("")
-        else:
-            self.spec_tec.setDisabled(False)
-            self.spec_setpoint.setDisabled(False)
-            attr.append("EnableTEC")
-            attr.append("TECSetPoint")
-            attr.append("TECTemperature")
+            self.spec_update_tec.hide()
+            self.spec_tec.hide()
+            self.spec_termicon.hide()
+            self.spec_tectemp.hide()
+
+        self.spec_int.setTangoAttribute(self.dev.name() + "/IntegrationTime")
+        self.spec_avg.setTangoAttribute(self.dev.name() + "/ScansToAverage")
+        self.spec_boxcar.setTangoAttribute(self.dev.name() + "/BoxcarWidth")
 
         # Subscribe events for the new spectrometer
         self.ev_id = []
@@ -354,11 +341,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         else:
             attr_name = ev.attr_value.name.lower()
 
-            if attr_name == 'boxcarwidth':
-                if not self.spec_boxcar.hasFocus():
-                    self.spec_boxcar.setText("{0:d}".format(ev.attr_value.value))
-
-            elif attr_name == 'enablebackgroundsubtraction':
+            if attr_name == 'enablebackgroundsubtraction':
                 self.spec_bkgsub.setChecked(ev.attr_value.value)
 
             elif attr_name == 'enableelectricaldarkcorrection':
@@ -373,23 +356,11 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
                 else:
                     self.spec_nl.setCheckState(QtCore.Qt.Unchecked)
 
-            elif attr_name == 'integrationtime':
-                if not self.spec_int.hasFocus():
-                    self.spec_int.setText("{0:.2f} ms".format(ev.attr_value.value))
-
-            elif attr_name == 'scanstoaverage':
-                if not self.spec_avg.hasFocus():
-                    self.spec_avg.setText("{0:d}".format(ev.attr_value.value))
-
             elif attr_name == 'enabletec':
                 self.spec_tec.setChecked(ev.attr_value.value)
 
             elif attr_name == 'tectemperature':
                 self.spec_tectemp.setText("{0:.1f} °C".format(ev.attr_value.value))
-
-            elif attr_name == 'tecsetpoint':
-                if not self.spec_setpoint.hasFocus():
-                    self.spec_setpoint.setText("{0:.1f} °C".format(ev.attr_value.value))
 
             elif attr_name == 'spectrum':
                 #refresh = int(self.refresh_rate.itemText(self.refresh_rate.currentIndex()))
@@ -512,53 +483,6 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
             for o in overlays:
                 self.spectrum_plot.lines.append(o)
 
-    @QtCore.pyqtSlot()
-    def on_spec_avg_editingFinished(self):
-        """ Set number of scans to average. """
-        if self.dev is not None and self.dev_state != PT.DevState.FAULT:
-            try:
-                self.dev.ScansToAverage = int(self.spec_avg.text())
-            except PT.DevFailed as e:
-                QtWidgets.QMessageBox.critical(self, "Failed to set value", "Failed to set the number of scans to average (Error: {:})".format(e.args[0].desc))
-
-
-    @QtCore.pyqtSlot()
-    def on_spec_int_editingFinished(self):
-        """ Set integration time. """
-        if self.dev is not None and self.dev_state != PT.DevState.FAULT:
-            try:
-                value = self.spec_int.text()
-                if len(value) > 3 and value[-2:] == "ms":
-                    value = value[:-3]
-                self.dev.IntegrationTime = float(value)
-            except PT.DevFailed as e:
-                QtWidgets.QMessageBox.critical(self, "Failed to set value", "Failed to set the integration time (Error: {:})".format(e.args[0].desc))
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Bad value", "Failed to set the integration time (Error: {:})".format(e))
-
-    @QtCore.pyqtSlot()
-    def on_spec_setpoint_editingFinished(self):
-        """ Set TEC setpoint. """
-        if self.dev is not None and self.dev_state != PT.DevState.FAULT:
-            try:
-                value = self.spec_setpoint.text()
-                if len(value) > 3 and value[-2:] == "°C":
-                    value = value[:-3]
-                self.dev.TECSetpoint = float(value)
-            except PT.DevFailed as e:
-                QtWidgets.QMessageBox.critical(self, "Failed to set value", "Failed to set the integration time (Error: {:})".format(e.args[0].desc))
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Bad value", "Failed to set the integration time (Error: {:})".format(e))
-
-    @QtCore.pyqtSlot()
-    def on_spec_boxcar_editingFinished(self):
-        """ Set number of scans to average. """
-        if self.dev is not None and self.dev_state != PT.DevState.FAULT:
-            try:
-                self.dev.BoxcarWidth = int(self.spec_boxcar.text())
-            except PT.DevFailed as e:
-                QtWidgets.QMessageBox.critical(self, "Failed to set value", "Failed to set the boxcar width (Error: {:})".format(e.args[0].desc))
-
     @QtCore.pyqtSlot(int)
     def on_spec_dark_stateChanged(self, state):
         """ Enable/disable electrical dark correction. """
@@ -657,7 +581,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
     @QtCore.pyqtSlot()
     def on_clear_overlay_released(self):
         """ Clear all overlays. """
-        pop_overlays()
+        self.pop_overlays()
 
     @QtCore.pyqtSlot()
     def on_pb_exit_released(self):
@@ -785,6 +709,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
             # Update label
             self.spec_cursor.setText("{0:.1f} nm".format(self.spectrum_plot.lines[3].get_xdata()[0]))
             self.add_overlays(overlays)
+            self.spec_canvas.draw()
 
     @QtCore.pyqtSlot()
     def on_spec_setscale_released(self):
@@ -815,6 +740,14 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
             ymin = np.min(self.spectrum_plot.lines[0].get_ydata())
             ymax = np.max(self.spectrum_plot.lines[0].get_ydata())
             self.spectrum_plot.set_ylim([ymin, ymax])
+
+    @QtCore.pyqtSlot()
+    def on_spec_update_tec_released(self):
+        if self.dev:
+            try:
+                self.dev.forceTemperatureUpdate()
+            except PT.DevFailed as e:
+                QtWidgets.QMessageBox.critical(self, "Failed to update temperature", e.args[0].desc)
 
     @QtCore.pyqtSlot(QtGui.QResizeEvent)
     def resizeEvent(self, event):
