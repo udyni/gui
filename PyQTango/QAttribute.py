@@ -73,6 +73,7 @@ class QAttribute(QtWidgets.QWidget):
         try:
             if self.evid is not None:
                 self.attr.unsubscribe_event(self.evid)
+            self.evid = None
         except Exception as e:
             print("Error unsubscribing!", e)
 
@@ -82,29 +83,32 @@ class QAttribute(QtWidgets.QWidget):
         else:
             return ""
 
-    def attribute(self):
+    def tangoAttribute(self):
         if self.attr is not None:
             return self.attr.name()
         else:
             return None
 
-    def setAttribute(self, attr_name):
+    def setTangoAttribute(self, attr_name):
         if self.attr is not None:
             self.__unsubscribe()
             self.attr = None
-            self.evid = None
 
-        print("[D] Setting up attribute", attr_name)
-        try:
-            self.attr = PT.AttributeProxy(attr_name)
-            self.attr.ping()
-            self.setupWidget()
-            self.evid = self.attr.subscribe_event(PT.EventType.CHANGE_EVENT, self.event_callback)
-        except PT.DevFailed as e:
-            # TODO error
-            print("[E] Failed to setup attribute '{0}'. Error: {1!s}".format(attr_name, e.args[0].desc))
+        if attr_name == "":
+            # Clearing widget
+            self.__cleanWidget()
+        else:
+            print("[D] Setting up attribute", attr_name)
+            try:
+                self.attr = PT.AttributeProxy(attr_name)
+                self.attr.ping()
+                self.setupWidget()
+                self.evid = self.attr.subscribe_event(PT.EventType.CHANGE_EVENT, self.event_callback)
+            except PT.DevFailed as e:
+                # TODO error
+                print("[E] Failed to setup attribute '{0}'. Error: {1!s}".format(attr_name, e.args[0].desc))
 
-    def setupWidget(self):
+    def __cleanWidget(self):
         # Clean layout
         if self.w_value is not None:
             if isinstance(self.w_value, QtWidgets.QLineEdit):
@@ -126,9 +130,14 @@ class QAttribute(QtWidgets.QWidget):
             self.r_button.released.disconnect()
             self.layout.removeWidget(self.r_button)
             self.r_button = None
-
         self.__unit = None
         self.__enum_labels = None
+
+    def setupWidget(self):
+        # Clear widget
+        self.__cleanWidget()
+
+        # Read attribute config
         self.__cfg = self.attr.get_config()
 
         if self.__cfg.data_type == PT.CmdArgType.DevPipeBlob or self.__cfg.data_type == PT.CmdArgType.DevEncoded:
@@ -193,6 +202,7 @@ class QAttribute(QtWidgets.QWidget):
                                         n = int(m.groups()[1])
                                         while n > 1:
                                             step /= 10.0
+                                            n -= 1
                                     except ValueError:
                                         pass
                             self.w_value.setSingleStep(step)
