@@ -208,7 +208,7 @@ class LaserCamera(QtWidgets.QMainWindow, Ui_LaserCamera):
         self.tabs.setCurrentIndex(0)
         self.setref_panel = None
         self.references = {}
-        self.last_centroid = None
+        self.last_centroid = {}
         self.last_update = {}
 
         # GaussFitter
@@ -477,13 +477,13 @@ class LaserCamera(QtWidgets.QMainWindow, Ui_LaserCamera):
             img = ev.attr_value.value
 
             # Compute image centroid if any of the views need it
-            if self.any_centroid_on():
+            if self.any_centroid_on(attr_name):
                 centroid = self.compute_centroid(img)
                 if centroid is None:
-                    self.last_centroid = None
+                    self.last_centroid[attr_name] = None
                     self.error("Failed to find a centroid")
                 else:
-                    self.last_centroid = centroid
+                    self.last_centroid[attr_name] = centroid
             else:
                 centroid = None
 
@@ -634,9 +634,15 @@ class LaserCamera(QtWidgets.QMainWindow, Ui_LaserCamera):
             index = ax.lines.index(line)
             del ax.lines[index]
 
-    def any_centroid_on(self):
-        for pos in ['l', 'r', 'u', 'd']:
-            if getattr(self, 'image_bt_tracking_'+pos).isChecked():
+    def any_centroid_on(self, attr_name):
+        if str(self.image_l_select.currentText()).lower() == attr_name:
+            if self.image_bt_tracking_l.isChecked():
+                return True
+        if str(self.image_r_select.currentText()).lower() == attr_name:
+            if self.image_bt_tracking_r.isChecked():
+                return True
+        if str(self.spec_img.currentText()).lower() == attr_name:
+            if self.image_bt_tracking_u.isChecked() or self.image_bt_tracking_d.isChecked():
                 return True
         return False
 

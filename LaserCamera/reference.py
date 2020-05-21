@@ -223,22 +223,39 @@ class ReferencePanel(QtWidgets.QDialog, Ui_Reference):
 
     @QtCore.pyqtSlot()
     def on_pb_centroid_released(self):
-        if not self.parent.any_centroid_on() or self.parent.last_centroid is None:
+        if self.view_select.currentText() == 'Left':
+            attr_name = str(self.parent.image_l_select.currentText()).lower()
+        elif self.view_select.currentText() == 'Right':
+            attr_name = str(self.parent.image_r_select.currentText()).lower()
+        elif self.view_select.currentText() == 'Projection':
+            attr_name = str(self.parent.spec_img.currentText()).lower()
+        else:
+            return
+
+        if not self.parent.any_centroid_on(attr_name) or attr_name not in self.parent.last_centroid:
             QtWidgets.QMessageBox.critical(self, "Cannot get centroid", "To set reference to centroid tracking must be on")
             return
-        self.x.setValue(self.parent.last_centroid[0])
-        self.y.setValue(self.parent.last_centroid[1])
-
+        self.x.setValue(self.parent.last_centroid[attr_name][0])
+        self.y.setValue(self.parent.last_centroid[attr_name][1])
 
     @QtCore.pyqtSlot()
     def on_pb_gauss_released(self):
-        if not self.parent.any_centroid_on() or self.parent.last_centroid is None:
+        if self.view_select.currentText() == 'Left':
+            attr_name = str(self.parent.image_l_select.currentText()).lower()
+        elif self.view_select.currentText() == 'Right':
+            attr_name = str(self.parent.image_r_select.currentText()).lower()
+        elif self.view_select.currentText() == 'Projection':
+            attr_name = str(self.parent.spec_img.currentText()).lower()
+        else:
+            return
+
+        if not self.parent.any_centroid_on(attr_name) or attr_name not in self.parent.last_centroid:
             QtWidgets.QMessageBox.critical(self, "Cannot get fit", "To set reference to gauss fit tracking must be on")
             return
-        self.x.setValue(self.parent.last_centroid[2][0])
-        self.y.setValue(self.parent.last_centroid[2][1])
-        self.h.setValue(self.parent.last_centroid[2][2])
-        self.v.setValue(self.parent.last_centroid[2][3])
+        self.x.setValue(self.parent.last_centroid[attr_name][2][0])
+        self.y.setValue(self.parent.last_centroid[attr_name][2][1])
+        self.h.setValue(self.parent.last_centroid[attr_name][2][2])
+        self.v.setValue(self.parent.last_centroid[attr_name][2][3])
 
     @QtCore.pyqtSlot()
     def on_pb_save_released(self):
