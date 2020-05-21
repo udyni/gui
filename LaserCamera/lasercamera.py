@@ -1033,7 +1033,7 @@ class LaserCamera(QtWidgets.QMainWindow, Ui_LaserCamera):
 
         for k, v in self.references.items():
             if v is not None:
-                prop[dev_name + ":" + k] = "x={0:.2f}:y={0:.2f}:h={2:.2f}:v={3:.2f}".format(v['x'], v['y'], v['h'], v['v'])
+                prop[dev_name + ":" + k] = "x={0:.2f}:y={1:.2f}:h={2:.2f}:v={3:.2f}".format(v['x'], v['y'], v['h'], v['v'])
         try:
             if self.simulation:
                 for k, v in prop.items():
