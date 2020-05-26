@@ -117,7 +117,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
 
         # Remove current position label
         n = self.spec_toolbar.layout().count()
-        label = self.spec_toolbar.layout().takeAt(n - 1)
+        self.spec_toolbar.layout().takeAt(n - 1)
         self.spec_toolbar.addSeparator()
 
         # Add autoscale button
@@ -260,6 +260,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
         self.dev = PT.DeviceProxy(device)
         self.dev.ping()
         self.wl = self.dev.Wavelength
+        self.counter = 0
 
         # Update model, serial and firmware version
         self.spec_model.setText(self.dev.Model)
@@ -363,6 +364,9 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
                 self.spec_tectemp.setText("{0:.1f} °C".format(ev.attr_value.value))
 
             elif attr_name == 'spectrum':
+                print("Got spectrum event {0:d} from {1!s}".format(self.counter, ev.device.name()))
+                self.counter += 1
+
                 #refresh = int(self.refresh_rate.itemText(self.refresh_rate.currentIndex()))
                 if (time.time() - self.last_spectrum_update) > 0.2:
                     self.last_spectrum_update = time.time()
@@ -752,7 +756,7 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
     @QtCore.pyqtSlot(QtGui.QResizeEvent)
     def resizeEvent(self, event):
         """ Handle the resize event of the window. """
-        if event.size().isValid() and event.oldSize().isValid() and not self.inhibith_resize:
+        if event.size().isValid() and event.oldSize().isValid():
             w = event.size().width()
             h = event.size().height()
             dw = w - event.oldSize().width()
@@ -796,8 +800,6 @@ class SpectrumViewer(QtWidgets.QMainWindow, Ui_SpectrumViewer):
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    if app.primaryScreen().physicalDotsPerInch() > 120:
-        app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True) # Enable HiDpi
     ui = SpectrumViewer()
     ui.show()
     ret = app.exec_()
