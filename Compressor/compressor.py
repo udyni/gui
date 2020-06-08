@@ -9,6 +9,7 @@ Created on Sun May 10 22:21:29 2020
 import sys
 import os
 ## Add import paths
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 sys.path.insert(1, os.path.join(sys.path[0], '../Icons'))
 
 from PyQt5 import QtCore
@@ -50,26 +51,6 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
         self.setupUi(self)
         self.setup_fonts_and_scaling()
 
-
-        self.position.blockSignals(True)
-        self.velocity.blockSignals(True)
-        self.acceleration.blockSignals(True)
-
-        # Set minimum and maximum
-        self.position.setMinimum(int(-2**28))
-        self.position.setMaximum(int(2**28))
-        self.position.setSingleStep(1)
-        self.velocity.setMinimum(16.0)
-        self.velocity.setMaximum(5000.0)
-        self.velocity.setSingleStep(1.0)
-        self.acceleration.setMinimum(49.0)
-        self.acceleration.setMaximum(1518.0)
-        self.acceleration.setSingleStep(1.0)
-
-        self.position.blockSignals(False)
-        self.velocity.blockSignals(False)
-        self.acceleration.blockSignals(False)
-
         # Setup device
         try:
             self.dev = PT.DeviceProxy("udyni/laser/compressor")
@@ -78,10 +59,10 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
             QtWidgets.QMessageBox.critical(self, "Device not found", "Cannot connect to the compressor control device")
             app.quit()
 
-        # Value changed flags
-        self.position_vc = False
-        self.velocity_vc = False
-        self.acceleration_vc = False
+        # Configure attributes
+        self.position.setTangoAttribute(self.dev.name() + "/Position")
+        self.velocity.setTangoAttribute(self.dev.name() + "/Velocity")
+        self.acceleration.setTangoAttribute(self.dev.name() + "/Acceleration")
 
         # Connect event to slot
         self.tango_event.connect(self.event_handler)
@@ -89,7 +70,7 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
         # Subscribe events
         try:
             self.ev_id = []
-            for a in ['Position', 'Velocity', 'Acceleration', 'Temperature', 'Voltage', 'State']:
+            for a in ['Temperature', 'Voltage', 'State']:
                 ev = self.dev.subscribe_event(a, PT.EventType.CHANGE_EVENT, self.event_callback)
                 self.ev_id.append(ev)
 
@@ -166,30 +147,6 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
                     self.state.setText("UNKN")
                     self.state.setStyleSheet(base_style + "background-color: gray; color: black")
 
-            elif attr_name == "position":
-                if self.position_vc:
-                    self.position.setStyleSheet("color: red")
-                else:
-                    self.position.blockSignals(True)
-                    self.position.setValue(attr_value)
-                    self.position.blockSignals(False)
-
-            elif attr_name == "velocity":
-                if self.velocity_vc:
-                    self.velocity.setStyleSheet("color: red")
-                else:
-                    self.velocity.blockSignals(True)
-                    self.velocity.setValue(attr_value)
-                    self.velocity.blockSignals(False)
-
-            elif attr_name == "acceleration":
-                if self.acceleration_vc:
-                    self.acceleration.setStyleSheet("color: red")
-                else:
-                    self.acceleration.blockSignals(True)
-                    self.acceleration.setValue(attr_value)
-                    self.acceleration.blockSignals(False)
-
             elif attr_name == "temperature":
                 self.temperature.setText("{0:.1f} °C".format(attr_value))
 
@@ -198,115 +155,6 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
 
             else:
                 self.debug("Unexpected attribute '{0}'".format(attr_name))
-
-    ##
-    ## Position
-    ##
-    @QtCore.pyqtSlot(float)
-    def on_position_valueChanged(self, value):
-        self.position_vc = True
-        self.position_c.setDisabled(False)
-        self.position_r.setDisabled(False)
-        self.position.setStyleSheet("color: darkgreen")
-
-    @QtCore.pyqtSlot()
-    def on_position_c_released(self):
-        self.position.blockSignals(True)
-        try:
-            self.dev.Position = self.position.value()
-            self.position_vc = False
-            self.position_c.setDisabled(True)
-            self.position_r.setDisabled(True)
-            self.position.setStyleSheet("")
-        except PT.DevFailed as e:
-            QtWidgets.QMessageBox.critical(self, "Failed to set position", e.args[0].desc)
-        self.position.blockSignals(False)
-
-    @QtCore.pyqtSlot()
-    def on_position_r_released(self):
-        self.position.blockSignals(True)
-        try:
-            self.position.setValue(self.dev.Position)
-            self.position_vc = False
-            self.position_c.setDisabled(True)
-            self.position_r.setDisabled(True)
-            self.position.setStyleSheet("")
-        except PT.DevFailed as e:
-            QtWidgets.QMessageBox.critical(self, "Failed to restore position", e.args[0].desc)
-        self.position.blockSignals(False)
-
-    ##
-    ## Velocity
-    ##
-    @QtCore.pyqtSlot(float)
-    def on_velocity_valueChanged(self, value):
-        self.velocity_vc = True
-        self.velocity_c.setDisabled(False)
-        self.velocity_r.setDisabled(False)
-        self.velocity.setStyleSheet("color: darkgreen")
-
-    @QtCore.pyqtSlot()
-    def on_velocity_c_released(self):
-        self.velocity.blockSignals(True)
-        try:
-            self.dev.Velocity = self.velocity.value()
-            self.velocity_vc = False
-            self.velocity_c.setDisabled(True)
-            self.velocity_r.setDisabled(True)
-            self.velocity.setStyleSheet("")
-        except PT.DevFailed as e:
-            QtWidgets.QMessageBox.critical(self, "Failed to set velocity", e.args[0].desc)
-        self.velocity.blockSignals(False)
-
-    @QtCore.pyqtSlot()
-    def on_velocity_r_released(self):
-        self.velocity.blockSignals(True)
-        try:
-            self.velocity.setValue(self.dev.Velocity)
-            self.velocity_vc = False
-            self.velocity_c.setDisabled(True)
-            self.velocity_r.setDisabled(True)
-            self.velocity.setStyleSheet("")
-        except PT.DevFailed as e:
-            QtWidgets.QMessageBox.critical(self, "Failed to restore velocity", e.args[0].desc)
-        self.velocity.blockSignals(False)
-
-    ##
-    ## Acceleration
-    ##
-    @QtCore.pyqtSlot(float)
-    def on_acceleration_valueChanged(self, value):
-        self.acceleration_vc = True
-        self.acceleration_c.setDisabled(False)
-        self.acceleration_r.setDisabled(False)
-        self.acceleration.setStyleSheet("color: darkgreen")
-
-    @QtCore.pyqtSlot()
-    def on_acceleration_c_released(self):
-        self.acceleration.blockSignals(True)
-        try:
-            self.dev.Acceleration = self.acceleration.value()
-            self.acceleration_vc = False
-            self.acceleration_c.setDisabled(True)
-            self.acceleration_r.setDisabled(True)
-            self.acceleration.setStyleSheet("")
-        except PT.DevFailed as e:
-            QtWidgets.QMessageBox.critical(self, "Failed to set acceleration", e.args[0].desc)
-        self.acceleration.blockSignals(False)
-
-    @QtCore.pyqtSlot()
-    def on_acceleration_r_released(self):
-        self.acceleration.blockSignals(True)
-        try:
-            self.acceleration.setValue(self.dev.Acceleration)
-            self.acceleration_vc = False
-            self.acceleration_c.setDisabled(True)
-            self.acceleration_r.setDisabled(True)
-            self.acceleration.setStyleSheet("")
-        except PT.DevFailed as e:
-            QtWidgets.QMessageBox.critical(self, "Failed to restore acceleration", e.args[0].desc)
-        self.acceleration.blockSignals(False)
-
 
     def move_button(self, delta):
         try:
