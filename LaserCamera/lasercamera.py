@@ -108,8 +108,14 @@ class GaussFitter(object):
         mean = x[id_max]
         # FWHM = 2 * sqrt(2 * log(2)) * sigma
         y_fwhm = np.abs(y - baseline - maximum/2)
-        fwhm_id1 = np.argmin(y_fwhm[0:id_max])
-        fwhm_id2 = id_max + np.argmin(y_fwhm[id_max:])
+        if id_max > 0:
+            fwhm_id1 = np.argmin(y_fwhm[0:id_max])
+        else:
+            fwhm_id1 = 0
+        if id_max < len(y_fwhm):
+            fwhm_id2 = id_max + np.argmin(y_fwhm[id_max:])
+        else:
+            fwhm_id2 = len(y_fwhm) - 1
         fwhm = x[fwhm_id2] - x[fwhm_id1]
         sigma = fwhm / 2 / np.sqrt(2 * np.log(2))
         return (baseline, maximum, mean, sigma)
