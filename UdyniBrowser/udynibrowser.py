@@ -282,7 +282,14 @@ class ProgramItem(TreeItem):
         if self.pid is None:
             # Start process
             self.pid = -1 # Just to be sure that we cannot start the process twice
-            self.process = subprocess.Popen(self.cmdline, start_new_session=True)
+            try:
+                self.process = subprocess.Popen(self.cmdline, start_new_session=True)
+            except Exception as e:
+                # Start failed
+                QtWidgets.QMessageBox.critical(None, "Failed to start {0}".format(self.name), "{0!s}".format(e))
+                self.pid = None
+                return
+
             time.sleep(0.5)
             # Check if we started a java program
             c = psutil.Process(self.process.pid).children()
