@@ -52,6 +52,10 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
         self.setup_fonts_and_scaling()
 
         # Setup device
+        self.temp_dev = None
+        self.temp_attr = ['RP_SxDown', 'RP_DxDown', 'RP_SxUp', 'RP_AMB', 'RP_DxUp', 'RG_Dx', 'RG_Sx', 'RG_AMB']
+        self.temp_widgets = [self.sm_ld, self.sm_rd, self.sm_lu, self.sm_amb, self.sm_ru, self.lg_r, self.lg_l, self.lg_amb]
+        self.temp_values = {}
         try:
             self.dev = PT.DeviceProxy("udyni/laser/compressor")
             self.dev.ping()
@@ -154,7 +158,52 @@ class Compressor(QtWidgets.QMainWindow, Ui_Compressor):
                 self.voltage.setText("{0:.1f} V".format(attr_value))
 
             else:
-                self.debug("Unexpected attribute '{0}'".format(attr_name))
+                for a in self.temp_attr:
+                    if attr_name == a.lower():
+                        # Found
+                        t = attr_value - 273.15
+                        if a not in self.temp_values:
+                            self.temp_values[a] = t
+                        else:
+                            self.temp_values[a] = 0.9 * self.temp_values[a] + 0.1 * t
+                        self.temp_widgets[self.temp_attr.index(a)].setText("{0:.1f} °C".format(self.temp_values[a]))
+                        break
+                else:
+                    self.debug("Unexpected attribute '{0}'".format(attr_name))
+
+    @QtCore.pyqtSlot(int)
+    def on_tabs_currentChanged(self, index):
+        if index == 0:
+            # Move grating tab (unsubscribe from temperatures)
+            if self.temp_dev is not None:
+                for ev in self.temp_evid:
+                    self.temp_dev.unsubscribe_event(ev)
+                self.temp_evid = []
+                self.temp_dev = None
+
+        elif index == 1:
+            # Temperature tab
+            try:
+                self.temp_dev = PT.DeviceProxy("udyni/monitoring/pitemp1")
+                self.temp_dev.ping()
+                self.temp_evid = []
+                for a in self.temp_attr:
+                    self.temp_evid.append(self.temp_dev.subscribe_event(a, PT.EventType.CHANGE_EVENT, self.event_callback))
+            except PT.DevFailed as e:
+                QtWidgets.QMessageBox.critical(self, "Failed to connect to temperature monitor", e.args[0].desc)
+                self.sm_lu.setText("N.A.")
+                self.sm_ld.setText("N.A.")
+                self.sm_ru.setText("N.A.")
+                self.sm_rd.setText("N.A.")
+                self.sm_amb.setText("N.A.")
+                self.lg_l.setText("N.A.")
+                self.lg_r.setText("N.A.")
+                self.lg_amb.setText("N.A.")
+                self.temp_dev = None
+                self.temp_evid = []
+                self.temp_values = {}
+        else:
+            self.error("Unexpected index: {0:d}".format(index))
 
     def move_button(self, delta):
         try:
