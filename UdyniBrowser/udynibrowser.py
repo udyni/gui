@@ -283,14 +283,24 @@ class ProgramItem(TreeItem):
             # Start process
             self.pid = -1 # Just to be sure that we cannot start the process twice
             try:
-                self.process = subprocess.Popen(self.cmdline, start_new_session=True)
+                self.process = subprocess.Popen(self.cmdline, start_new_session=True, stderr=subprocess.PIPE)
+                time.sleep(0.5)
+                self.process.poll()
+                if self.process.returncode is not None:
+                    # Process ended
+                    if self.process.returncode < 0:
+                        raise OSError("Process ended by signal {0:d}".fromat(self.process.returncode))
+                    else:
+                        msg = "\n".join([l.decode('utf-8') for l in self.process.stderr.readlines()]).strip()
+                        raise OSError("Return code: {0:d}, Error: {1:s}".format(self.process.returncode, msg))
+
             except Exception as e:
                 # Start failed
                 QtWidgets.QMessageBox.critical(None, "Failed to start {0}".format(self.name), "{0!s}".format(e))
                 self.pid = None
                 return
 
-            time.sleep(0.5)
+
             # Check if we started a java program
             c = psutil.Process(self.process.pid).children()
             if len(c) > 0 and c[0].name() == "java":
