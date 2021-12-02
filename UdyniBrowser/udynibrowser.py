@@ -20,10 +20,6 @@ Dependencies:
 
 import sys
 import os
-## Add import paths
-sys.path.insert(1, os.path.join(sys.path[0], '../Icons'))
-
-import re
 import time
 import psutil
 import shlex
@@ -40,12 +36,16 @@ except ImportError as e:
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
+
+# Add import paths
+sys.path.insert(1, os.path.join(sys.path[0], '../Icons'))
 from Ui_udynibrowser import Ui_UdyniBrowser
 
 
 class TreeItem(object):
     """ General tree item class
     """
+
     def __init__(self, parent=None):
         """ Constructor
         """
@@ -85,6 +85,7 @@ class ProcessTree(TreeItem):
     """
     Process tree root
     """
+
     def __init__(self, configuration, parent=None):
         """ Constructor
         Get the XML configuration as a string
@@ -132,6 +133,7 @@ class CategoryItem(TreeItem):
     Tree item that represent a category
     This type can have children
     """
+
     def __init__(self, data, parent=None):
         """ Constructor
         """
@@ -169,6 +171,7 @@ class ProgramItem(TreeItem):
     Tree item that represent a program
     This type cannot have children
     """
+
     def __init__(self, data, parent=None):
         """ Constructor
         """
@@ -202,61 +205,65 @@ class ProgramItem(TreeItem):
         """
         pname = os.path.split(self.cmdline[0])[-1]
         for p in psutil.process_iter():
-            # Skip system processes without a command line
-            if not len(p.cmdline()):
-                continue
+            try:
+                # Skip system processes without a command line
+                if not len(p.cmdline()):
+                    continue
 
-            # If the PID match and the process is a zombie we should wait on it
-            if p.pid == self.pid and p.status() == "zombie":
-                if self.process is not None:
-                    self.process.wait()
-                    self.process = None
-                    self.pid = None
-                # We can go on searching for a new instance
-                continue
+                # If the PID match and the process is a zombie we should wait on it
+                if p.pid == self.pid and p.status() == "zombie":
+                    if self.process is not None:
+                        self.process.wait()
+                        self.process = None
+                        self.pid = None
+                    # We can go on searching for a new instance
+                    continue
 
-            #if p.name() == pname:
-            if str(p.cmdline()).find(pname) != -1:
-                # Special case for python panels
-                if pname == "python" or pname == "python3":
+                # if p.name() == pname:
+                if str(p.cmdline()).find(pname) != -1:
+                    # Special case for python panels
+                    if pname == "python" or pname == "python3":
 
-                    # We should check that the running script is the right one
-                    if len(self.cmdline) < 2 or len(p.cmdline()) < 2:
-                        continue
+                        # We should check that the running script is the right one
+                        if len(self.cmdline) < 2 or len(p.cmdline()) < 2:
+                            continue
 
-                    if os.path.split(self.cmdline[1])[-1] != os.path.split(p.cmdline()[1])[-1]:
-                        # Not the right process
-                        continue
+                        if os.path.split(self.cmdline[1])[-1] != os.path.split(p.cmdline()[1])[-1]:
+                            # Not the right process
+                            continue
 
-                # Special case for Tango java utilities
-                elif len(p.children()) > 0 and p.children()[0].name() == "java":
-                    # We should use the java child process
-                    p = p.children()[0]
+                    # Special case for Tango java utilities
+                    elif len(p.children()) > 0 and p.children()[0].name() == "java":
+                        # We should use the java child process
+                        p = p.children()[0]
 
-                # Process found
-                if self.pid is not None:
-                    if p.pid != self.pid:
-                        if not psutil.pid_exists(self.pid):
-                            # Original process died. We can use this new one
-                            self.pid = p.pid
-                            self.process = None
+                    # Process found
+                    if self.pid is not None:
+                        if p.pid != self.pid:
+                            if not psutil.pid_exists(self.pid):
+                                # Original process died. We can use this new one
+                                self.pid = p.pid
+                                self.process = None
+                                self.status = "Running"
+                                return
+
+                            else:
+                                # We may have found another instance of the same process
+                                continue
+
+                        else:
+                            # We found the process. It's still up and running
                             self.status = "Running"
                             return
 
-                        else:
-                            # We may have found another instance of the same process
-                            continue
-
                     else:
-                        # We found the process. It's still up and running
+                        # Found a new instance
+                        self.pid = p.pid
                         self.status = "Running"
                         return
-
-                else:
-                    # Found a new instance
-                    self.pid = p.pid
-                    self.status = "Running"
-                    return
+            except psutil.NoSuchProcess:
+                # Process disappeared, ignore
+                continue
 
         # If we arrived here then the process was not found
         self.pid = None
@@ -281,7 +288,7 @@ class ProgramItem(TreeItem):
         """
         if self.pid is None:
             # Start process
-            self.pid = -1 # Just to be sure that we cannot start the process twice
+            self.pid = -1  # Just to be sure that we cannot start the process twice
             try:
                 self.process = subprocess.Popen(self.cmdline, start_new_session=True, stderr=subprocess.PIPE)
                 time.sleep(0.5)
@@ -291,7 +298,7 @@ class ProgramItem(TreeItem):
                     if self.process.returncode < 0:
                         raise OSError("Process ended by signal {0:d}".fromat(self.process.returncode))
                     else:
-                        msg = "\n".join([l.decode('utf-8') for l in self.process.stderr.readlines()]).strip()
+                        msg = "\n".join([line.decode('utf-8') for line in self.process.stderr.readlines()]).strip()
                         raise OSError("Return code: {0:d}, Error: {1:s}".format(self.process.returncode, msg))
 
             except Exception as e:
@@ -299,7 +306,6 @@ class ProgramItem(TreeItem):
                 QtWidgets.QMessageBox.critical(None, "Failed to start {0}".format(self.name), "{0!s}".format(e))
                 self.pid = None
                 return
-
 
             # Check if we started a java program
             c = psutil.Process(self.process.pid).children()
@@ -348,6 +354,7 @@ class WindowItem(TreeItem):
     Tree item that represent a program window
     This type cannot have children
     """
+
     def __init__(self, window, parent=None):
         """ Constructor
         """
@@ -368,7 +375,7 @@ class WindowItem(TreeItem):
         if column == 0:
             try:
                 return self.win.get_wm_name()
-            except:
+            except Exception:
                 return "Bad window"
         else:
             return None
@@ -378,6 +385,7 @@ class UdyniTreeModel(QtCore.QAbstractItemModel):
     """
     Program tree model
     """
+
     def __init__(self, conf_tree, parent=None):
         """ Constructor
         Get tree of categories and programs
@@ -482,10 +490,10 @@ class UdyniTreeModel(QtCore.QAbstractItemModel):
 
             # Remove all windows
             if self.hasChildren(index):
-                    # Delete windows
-                    self.beginRemoveRows(index, 0, self.rowCount(index)-1)
-                    obj.clearWindows()
-                    self.endRemoveRows()
+                # Delete windows
+                self.beginRemoveRows(index, 0, self.rowCount(index) - 1)
+                obj.clearWindows()
+                self.endRemoveRows()
 
             # If the process is still running re-add them all
             if obj.isRunning():
@@ -494,7 +502,7 @@ class UdyniTreeModel(QtCore.QAbstractItemModel):
                 wins = obj.getWindowList()
                 windows += len(wins)
                 if len(wins) > 0:
-                    self.beginInsertRows(index, 0, len(wins)-1)
+                    self.beginInsertRows(index, 0, len(wins) - 1)
                     for w in wins:
                         obj.appendWindow(w)
                     self.endInsertRows()
@@ -535,6 +543,7 @@ class UdyniBrowser(QtWidgets.QMainWindow, Ui_UdyniBrowser):
     """
     Main class
     """
+
     def __init__(self, parent=None):
         """
         Constructor
@@ -591,7 +600,7 @@ class UdyniBrowser(QtWidgets.QMainWindow, Ui_UdyniBrowser):
                         # Scale icon
                         ratio = 20.0 / 27.0
                         psz = getattr(self, m).size()
-                        getattr(self, m).setIconSize(QtCore.QSize(int(psz.width()*ratio), int(psz.height()*ratio)))
+                        getattr(self, m).setIconSize(QtCore.QSize(int(psz.width() * ratio), int(psz.height() * ratio)))
 
                 elif issubclass(type(getattr(self, m)), QtWidgets.QWidget):
                     self.scale_widget(getattr(self, m), self.scaling)

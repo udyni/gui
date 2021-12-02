@@ -5,3 +5,4 @@ Name=UDynI Browser
 Exec=/opt/tango/gui/Browser
 Categories=Science;
 Icon=/opt/tango/gui/udyni.png
+StartupWMClass=udynibrowser.py

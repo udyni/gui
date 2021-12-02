@@ -21,6 +21,9 @@
 			<program executable="python none.py">Chiller supervisor</program>
 		</category>-->
 	</category>
+	<category id="motion" name="Motion" status="expanded">
+		<program executable="python3 ../SmarActControl/smaract.py">SmarAct Positioners Controller</program>
+	</category>
 	<category id="vmi" name="VMI" status="expanded">
 		<program executable="python3 ../IsegGUI/IsegGUI.py">Iseg HV power supplies</program>
 	</category>
