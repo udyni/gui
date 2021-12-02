@@ -59,6 +59,7 @@ class QAttribute(QtWidgets.QWidget):
         self.__unit = None
         self.__enum_labels = None
         self.__cfg = None
+        self.__sig_connected = False
 
     def __del__(self):
         # Destructor to unsubcribe from Tango events
@@ -111,14 +112,20 @@ class QAttribute(QtWidgets.QWidget):
     def __cleanWidget(self):
         # Clean layout
         if self.w_value is not None:
-            if isinstance(self.w_value, QtWidgets.QLineEdit):
-                self.w_value.textChanged.disconnect()
-            elif isinstance(self.w_value, QtWidgets.QCheckBox):
-                self.w_value.stateChanged.disconnect()
-            elif isinstance(self.w_value, QtWidgets.QSpinBox) or isinstance(self.w_value, QtWidgets.QDoubleSpinBox):
-                self.w_value.valueChanged.disconnect()
-            elif isinstance(self.w_value, QtWidgets.QComboBox):
-                self.w_value.currentIndexChanged.disconnect()
+            if self.__sig_connected:
+                try:
+                    if isinstance(self.w_value, QtWidgets.QLineEdit):
+                        self.w_value.textChanged.disconnect()
+                    elif isinstance(self.w_value, QtWidgets.QCheckBox):
+                        self.w_value.stateChanged.disconnect()
+                    elif isinstance(self.w_value, QtWidgets.QSpinBox) or isinstance(self.w_value, QtWidgets.QDoubleSpinBox):
+                        self.w_value.valueChanged.disconnect()
+                    elif isinstance(self.w_value, QtWidgets.QComboBox):
+                        self.w_value.currentIndexChanged.disconnect()
+                except TypeError as e:
+                    # Ignore errors while disconnecting signals
+                    print("[W] Disconnect failed. Error:", e)
+            self.__sig_connected = False
             self.layout.removeWidget(self.w_value)
             self.w_value = None
             self.w_value_c = False
@@ -251,14 +258,19 @@ class QAttribute(QtWidgets.QWidget):
                 # Connect signals
                 if isinstance(self.w_value, QtWidgets.QLineEdit):
                     self.w_value.textChanged.connect(self.on_textChanged)
+                    self.__sig_connected = True
                 elif isinstance(self.w_value, QtWidgets.QCheckBox):
                     self.w_value.stateChanged.connect(self.on_stateChanged)
+                    self.__sig_connected = True
                 elif isinstance(self.w_value, QtWidgets.QSpinBox):
                     self.w_value.valueChanged.connect(self.on_valueChanged_int)
+                    self.__sig_connected = True
                 elif isinstance(self.w_value, QtWidgets.QDoubleSpinBox):
                     self.w_value.valueChanged.connect(self.on_valueChanged_float)
+                    self.__sig_connected = True
                 elif isinstance(self.w_value, QtWidgets.QComboBox):
                     self.w_value.currentIndexChanged.connect(self.on_currentIndexChanged)
+                    self.__sig_connected = True
 
             elif self.__cfg.writable == PT.AttrWriteType.READ_WITH_WRITE:
                 raise NotImplementedError("READ_WITH_WRITE attributes are not yet implemented")
