@@ -17,15 +17,12 @@
 	</category>
 	<category id="cooling" name="Cooling system" status="expanded">
 		<program executable="python3 ../CoolingGUI/cooling.py">Cooling valves</program>
-		<!--<category id="cooling_adv" name="Advanced" status="collapsed">
-			<program executable="python none.py">Chiller supervisor</program>
-		</category>-->
 	</category>
 	<category id="motion" name="Motion" status="expanded">
 		<program executable="python3 ../SmarActControl/smaract.py">SmarAct Positioners Controller</program>
 	</category>
 	<category id="vmi" name="VMI" status="expanded">
-		<program executable="python3 ../IsegGUI/IsegGUI.py">Iseg HV power supplies</program>
+		<program executable="python3 ../IsegPSU/iseg.py">Iseg HV power supplies</program>
 	</category>
 	<category id="acquisition" name="Acquisition" status="expanded">
 		<program executable="python3 ../SpectrumViewer/spectrumviewer.py">Spectrum Viewer</program>
