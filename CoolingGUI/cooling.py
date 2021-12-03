@@ -141,6 +141,12 @@ class CoolingGUI(QtWidgets.QMainWindow, Ui_CoolingGUI):
             print("Tango exception: {:}".format(e))
 
     @QtCore.pyqtSlot()
+    def on_bn_chiller_recovery_released(self):
+        """ Start chiller recovery. """
+        dev = PT.DeviceProxy("udyni/cooling/chiller")
+        dev.startRecovery()
+
+    @QtCore.pyqtSlot()
     def on_bn_exit_released(self):
         """ Close main windows. """
         self.close()
