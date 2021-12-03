@@ -9,6 +9,9 @@ from .QStatusLed import QStatusLed
 from .QAttribute import QAttribute
 from .QCommandExecuter import QCommandExecuter
 
+# QDigitDial
+from .QDigitDial import QDigitDial
+
 # Note types
 from .CommonTree import TreeItem, DeviceItem, AttributeItem, ServerItem
 

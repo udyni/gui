@@ -1,5 +1,11 @@
 <RCC>
   <qresource prefix="icons">
+    <file>images/arrow_down.png</file>
+    <file>images/arrow_down_on.png</file>
+    <file>images/arrow_down_press.png</file>
+    <file>images/arrow_up.png</file>
+    <file>images/arrow_up_on.png</file>
+    <file>images/arrow_up_press.png</file>
     <file>images/branch-closed.png</file>
     <file>images/branch-end.png</file>
     <file>images/branch-more.png</file>
