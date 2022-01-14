@@ -58,12 +58,19 @@ class ArchivingViewer(QtWidgets.QMainWindow, Ui_ArchivingViewer):
         self.choose_be.setChecked(True)
 
         # Connect to HDBExtractor
-        try:
-            self.extractor = PT.DeviceProxy("archiving/hdb/hdbextractor.1")
-            self.extractor.ping()
-        except PT.DevFailed:
-            QtWidgets.QMessageBox.critical(None, "Extractor not available", "HDB extractor is not available")
-            exit(-1)
+        count = 0
+        while True:
+            try:
+                self.extractor = PT.DeviceProxy("archiving/hdb/hdbextractor.1")
+                self.extractor.ping()
+                break
+            except PT.DevFailed:
+                if count < 3:
+                    count += 1
+                    time.sleep(1)
+                else:
+                    QtWidgets.QMessageBox.critical(None, "Extractor not available", "HDB extractor is not available")
+                    exit(-1)
 
         # Add items to minutes combobox
         self.span_minutes.addItem("00", 0)
@@ -172,6 +179,7 @@ class ArchivingViewer(QtWidgets.QMainWindow, Ui_ArchivingViewer):
                 end = datetime.datetime.now()
             else:
                 end = self.end_date.dateTime().toPyDateTime()
+            delta = end - start
 
         elif self.choose_per.isChecked():
             # Begin and time span
@@ -236,15 +244,39 @@ class ArchivingViewer(QtWidgets.QMainWindow, Ui_ArchivingViewer):
         self.plot_ax = None
         self.plot_data = []
         self.plot_ax = self.spec_fig.add_subplot(111)
+
+        # Define timescale
+        tot = delta.total_seconds()
+        if tot > 2 * 24 * 3600:
+            # More that two days
+            self.plot_ax.set_xlabel("Time [days]")
+            conv = 24 * 3600.0
+        elif tot > 2 * 3600:
+            # More that two hours
+            self.plot_ax.set_xlabel("Time [hours]")
+            conv = 3600.0
+        else:
+            # Minutes
+            self.plot_ax.set_xlabel("Time [min]")
+            conv = 60.0
+
+        t0 = None
         for a in attr_to_plot:
             if a is not None:
+                # Time axis
+                t = a['tdata']
+                if t0 is None:
+                    t0 = t[0]
+                t -= t0  # Remove offset
+                t /= conv * 1000  # Convert
+                # Y axis
                 y = a['ydata']
                 if self.smooth_en.isChecked():
                     try:
-                        y = self.smooth(y, int(self.smooth_len.text()));
-                    except:
+                        y = self.smooth(y, int(self.smooth_len.text()))
+                    except Exception:
                         pass
-                self.plot_ax.plot(a['tdata'], y)
+                self.plot_ax.plot(t, y)
                 self.plot_data.append(y)
         self.spec_fig.tight_layout()
         self.spec_canvas.draw()
